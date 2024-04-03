@@ -55,31 +55,53 @@ public class Cryptography<Tuser> : ICryptography<Tuser> where Tuser : class
         }
     }
 
-    public string OpenIdJwtToken(Guid userId, string userName, Guid customerId,
-            string userEmail, IList<string> roleList,
-            IList<System.Security.Claims.Claim> ClaimTypes,
-            DateTime tokenValidationDate)
+    public Claim[] GetClaims(Guid userId, string firstName, string lastName,
+        string userName, Guid clientId, string userEmail)
     {
-        if (string.IsNullOrEmpty(userName)
-            || string.IsNullOrEmpty(userEmail))
-            throw new Exception("User name or email is empty.");
-
         try
         {
-            string role = string.Join(",", roleList.Select(r => r.ToString()));
-            string claim = string.Join(",", ClaimTypes.Select(c => c.ToString()));
-
-
-            var clims = new[]
+            return new[]
             {
                     new Claim("Id", userId.ToString()),
-                    new Claim("CustomerId", customerId.ToString()),
-                    new Claim("name", userName),
+                    new Claim("ClientId", clientId.ToString()),
+                    new Claim("firstName", firstName),
+                    new Claim("lastName", lastName),
+                    new Claim("userName", userName),
                     new Claim("email", userEmail),
-                    new Claim("role", role),
-                    new Claim("claimTypes", claim),
                     new Claim("iat", new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds().ToString()),
-                };
+            };
+        }
+        catch(Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public Claim[] GetClaims(Guid userId, string userName, string firstName, string lastName, Guid clientId,
+            string userEmail, IList<string> roleList)
+    {
+        try
+        {
+            var clims = GetClaims(userId, firstName, lastName, userName, clientId,
+            userEmail);
+
+            clims = clims.Concat(roleList.Select(role => new Claim(ClaimTypes.Role, role))).ToArray();
+
+            return clims;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public string OpenIdJwtToken(Guid userId, string userName, string firstName, string lastName, 
+        Guid clientId, string userEmail, IList<string> roleList, DateTime tokenValidationDate)
+
+    {
+        try
+        {
+            var clims = GetClaims(userId, firstName, lastName, userName, clientId, userEmail, roleList);
 
             return GenerateJWTAsymmetricToken(clims, tokenValidationDate,
                 AppInformation.Url,

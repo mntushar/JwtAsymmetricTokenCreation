@@ -1,10 +1,15 @@
-﻿namespace DNE.CS.Inventory.Library.Interface;
+﻿using System.Security.Claims;
+
+namespace DNE.CS.Inventory.Library.Interface;
 
 public interface ICryptography<Tuser> where Tuser : class
 {
-    string OpenIdJwtToken(Guid userId, string userName, Guid customerId,
+    Claim[] GetClaims(Guid userId, string firstName, string lastName, string userName, Guid clientId,
+            string userEmail);
+    Claim[] GetClaims(Guid userId, string firstName, string lastName, string userName, Guid clientId,
+            string userEmail, IList<string> roleList);
+    string OpenIdJwtToken(Guid userId, string firstName, string lastName, string userName, Guid clientId,
             string userEmail, IList<string> roleList,
-            IList<System.Security.Claims.Claim> ClaimTypes,
             DateTime tokenValidationDate);
     string GenerateRefreshToken(Guid userId, string purpose,
         string securityStamp, DateTime validityTime);
