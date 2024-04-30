@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+using DNE.CS.Inventory.Library.Interface;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 namespace DNE.CS.Inventory.Library;
 
@@ -9,28 +8,47 @@ public static class AppInformation
 {
     private static IConfiguration? _configuration;
 
-    public static string Url { get; } = "https://localhost:5266";
+    public static string Url { get; } = "https://localhost:7125/";
 
     public static string RedirectUrl { get; } = "/Account/Login";
     public static string LogoutUrl { get; } = "/Logout";
+    public static string CookieName { get; } = "Test";
+    public static bool IsNlog { get; } = false;
+
 
     public static DateTime AccessTokenValideMinute
     {
         get
         {
-            if (_configuration == null) return DateTime.Now.AddMinutes(1);
-            return DateTime.Now.AddMinutes(
-                Convert.ToInt32(_configuration["AccessTokenValideMinute"]));
+            try
+            {
+                if (_configuration == null) return DateTime.Now.AddMinutes(1);
+                return DateTime.Now.AddMinutes(
+                    Convert.ToInt32(_configuration["AccessTokenValideMinute"]));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 
-    public static DateTime RefreshTokenValideTime {
+    public static DateTime RefreshTokenValideTime
+    {
         get
         {
-            if (_configuration == null) return DateTime.Now.AddDays(1);
-            return DateTime.Now.AddDays(
-                Convert.ToInt32(_configuration["RefreshTokenValideDay"]));
-        } 
+            try
+            {
+                if (_configuration == null) return DateTime.Now.AddDays(1);
+                return DateTime.Now.AddDays(
+                    Convert.ToInt32(_configuration["RefreshTokenValideDay"]));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+        }
     }
 
     public static string? AccessTokenName
@@ -58,70 +76,40 @@ public static class AppInformation
         }
     }
 
-    public static string? AsyJwtCertification
+    public static string PrivateKey
     {
         get
         {
-            if (_configuration == null) return string.Empty;
-            return _configuration["JwtTokenCertification"];
+            if (_configuration == null) throw new Exception("configuration is null in appinformation");
+            return _configuration["PrivateKey"] ?? throw new Exception("Private key is null");
         }
     }
 
-    public static string? DataProtectKey
+    public static string DataProtectionKey
     {
         get
         {
-            if (_configuration == null) return string.Empty;
-            return _configuration["DataProtectKey"];
+            if(_configuration == null) throw new Exception("configuration is null in appinformation");
+            return _configuration["DataProtectionKey"] ?? throw new Exception("Data protection key is null");
         }
     }
 
-    public static RsaSecurityKey? AsyJwtECDsaPublicKey
+    public static RsaSecurityKey PublicKey
     {
         get
         {
             try
             {
-                // Load the X509Certificate2 from a file or store
-                if (AsyJwtCertification == null) return null;
-                using (X509Certificate2 certificate = new X509Certificate2(AsyJwtCertification, AsyJwtPrivateKeyDecryptPassword))
-                {
-                    // Get the RSA public key from the certificate
-                    RSA? publicKey = certificate.GetRSAPublicKey();
+                if (_configuration == null) throw new Exception("configuration is null in appinformation");
+                string publicKey = _configuration["PublicKey"] ?? throw new Exception("Public key is null");
 
-                    if (publicKey == null)
-                    {
-                        return null;
-                    }
-
-                    // Create an instance of RsaSecurityKey
-                    return new RsaSecurityKey(publicKey);
-                }
+                ICryptography<string> c = new Cryptography<string>();
+                return c.PublicKey(publicKey);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                throw new Exception(ex.Message);
             }
-
-            return null;
-        }
-    }
-
-    public static string? AsyJwtPrivateKeyDecryptPassword
-    {
-        get
-        {
-            try
-            {
-                if (_configuration == null) throw new Exception("AsyJwtPrivateKeyDecryptPassword key is empty.");
-                return _configuration["AsyJwtPrivateKeyDecryptPassword"];
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-
-            return null;
         }
     }
 
