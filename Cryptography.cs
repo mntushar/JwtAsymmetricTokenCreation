@@ -88,8 +88,9 @@ public class Cryptography<Tuser> : ICryptography<Tuser> where Tuser : class
         }
     }
 
-    public Claim[] GetClaims(Guid userId, string userName, string firstName, string lastName, Guid clientId,
-            string userEmail, IList<string> roleList)
+    public Claim[] GetClaims(Guid userId, string userName,
+        string firstName, string lastName, Guid clientId,
+        string userEmail, IList<string> roleList)
     {
         try
         {
@@ -106,13 +107,74 @@ public class Cryptography<Tuser> : ICryptography<Tuser> where Tuser : class
         }
     }
 
+    public Claim[] GetClaims(Guid userId, string userName,
+        string firstName, string lastName, Guid clientId,
+        string userEmail, Claim[] claims)
+    {
+        try
+        {
+            var clims = GetClaims(userId, firstName, lastName, userName, clientId,
+            userEmail);
+
+            clims = clims.Concat(claims).ToArray();
+
+            return clims;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public Claim[] GetClaims(Guid userId, string userName,
+        string firstName, string lastName, Guid clientId,
+        string userEmail, IList<string> roleList, Claim[] claims)
+    {
+        try
+        {
+            var clims = GetClaims(userId, firstName, lastName, userName, clientId,
+            userEmail);
+
+            clims = clims.Concat(roleList.Select(role => new Claim(ClaimTypes.Role, role))).ToArray();
+
+            clims = clims.Concat(roleList.Select(role => new Claim(role, role))).ToArray();
+
+            clims = clims.Concat(claims).ToArray();
+
+            return clims;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
     public string OpenIdJwtToken(Guid userId, string userName, string firstName, string lastName,
         Guid clientId, string userEmail, IList<string> roleList, DateTime tokenValidationDate)
-
     {
         try
         {
             var clims = GetClaims(userId, firstName, lastName, userName, clientId, userEmail, roleList);
+
+            return GenerateJWTAsymmetricToken(clims, tokenValidationDate,
+                AppInformation.Url,
+                AppInformation.Url);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public string OpenIdJwtToken(Guid userId, string userName,
+        string firstName, string lastName, Guid clientId,
+        string userEmail, IList<string> roleList, Claim[] claims,
+        DateTime tokenValidationDate)
+    {
+        try
+        {
+            var clims = GetClaims(userId, firstName, lastName, userName,
+                clientId, userEmail, roleList, claims);
 
             return GenerateJWTAsymmetricToken(clims, tokenValidationDate,
                 AppInformation.Url,
