@@ -8,12 +8,14 @@ public static class AppInformation
 {
     private static IConfiguration? _configuration;
 
-    public static string Url { get; } = "https://localhost:7125/";
+    public static string Url { get; } = "http://test.net/";
 
     public static string RedirectUrl { get; } = "/Account/Login";
     public static string LogoutUrl { get; } = "/Logout";
-    public static string CookieName { get; } = "Test";
+    public static string CookieName { get; } = "test.Application";
     public static bool IsNlog { get; } = false;
+    // 15 MB limit in bytes
+    public static long MaxFileSize { get; } = 1024 * 1024 * 15;
 
 
     public static DateTime AccessTokenValideMinute
